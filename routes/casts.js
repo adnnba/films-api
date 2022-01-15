@@ -6,7 +6,7 @@ const { Cast, castAddJoi, castEditJoi } = require("../models/Cast")
 const router = express.Router()
 
 router.get("/", async (req, res) => {
-  const casts = await Cast.find()
+  const casts = await Cast.find().populate("films")
   res.json(casts)
 })
 

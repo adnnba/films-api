@@ -14,7 +14,17 @@ const router = express.Router()
 /* Films */
 
 router.get("/", async (req, res) => {
-  const films = await Film.find().populate("actors").populate("director").populate("genres")
+  const films = await Film.find()
+    .populate("actors")
+    .populate("director")
+    .populate("genres")
+    .populate({
+      path: "comments",
+      populate: {
+        path: "owner",
+        select: "-password -email -likes -role",
+      },
+    })
   res.json(films)
 })
 
@@ -65,6 +75,12 @@ router.post("/", checkAdmin, validateBody(filmAddJoi), async (req, res) => {
       director,
       genres,
     })
+
+    const promisesActors = actors.map(actorId => Cast.findByIdAndUpdate(actorId, { $push: { films: film._id } }))
+
+    await Promise.all(promisesActors)
+
+    await Cast.findByIdAndUpdate(director, { $push: { films: film._id } })
 
     await film.save()
 
@@ -253,9 +269,12 @@ router.get("/:filmId/likes", checkToken, validateId("filmId"), async (req, res) 
     const userFound = film.likes.find(like => like == req.userId)
     if (userFound) {
       await Film.findByIdAndUpdate(req.params.filmId, { $pull: { likes: req.userId } })
+      await User.findByIdAndUpdate(req.userId, { $pull: { likes: req.params.filmId } })
+
       res.send("removed like from film")
     } else {
       await Film.findByIdAndUpdate(req.params.filmId, { $push: { likes: req.userId } })
+      await User.findByIdAndUpdate(req.userId, { $push: { likes: req.params.filmId } })
       res.send("film liked")
     }
   } catch (error) {

@@ -5,6 +5,10 @@ const userSchema = new mongoose.Schema({
   firstName: String,
   lastName: String,
   email: String,
+  emailVerified: {
+    type: Boolean,
+    default: false,
+  },
   password: String,
   avatar: String,
   likes: [
@@ -33,11 +37,19 @@ const loginJoi = Joi.object({
   password: Joi.string().min(6).max(100).required(),
 })
 
-const profileJoi = Joi.object({
+const profileJoi = {
   firstName: Joi.string().min(2).max(100),
   lastName: Joi.string().min(2).max(100),
   password: Joi.string().min(6).max(100),
   avatar: Joi.string().uri().min(6).max(1000),
+}
+
+const forgotPasswordJoi = Joi.object({
+  email: Joi.string().email().required(),
+})
+
+const resetPasswordJoi = Joi.object({
+  password: Joi.string().min(6).max(100).required(),
 })
 
 const User = mongoose.model("User", userSchema)
@@ -46,3 +58,5 @@ module.exports.User = User
 module.exports.signupJoi = signupJoi
 module.exports.loginJoi = loginJoi
 module.exports.profileJoi = profileJoi
+module.exports.forgotPasswordJoi = forgotPasswordJoi
+module.exports.resetPasswordJoi = resetPasswordJoi
